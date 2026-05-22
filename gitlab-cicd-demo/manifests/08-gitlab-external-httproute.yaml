@@ -1,0 +1,21 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: demo-gitlab-route
+  namespace: hse-llm-project
+spec:
+  parentRefs:
+    - name: web-gateway
+      namespace: hse-llm-project
+  hostnames:
+    - demo.hse-llm.internal
+    - demo.hse-llm-project-2026.ru
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: gitlab
+          namespace: gitlab-demo
+          port: 80

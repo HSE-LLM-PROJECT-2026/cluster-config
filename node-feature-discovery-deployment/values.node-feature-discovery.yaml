@@ -1,0 +1,8 @@
+master:
+  enable: true
+
+worker:
+  enable: true
+
+gc:
+  enable: true

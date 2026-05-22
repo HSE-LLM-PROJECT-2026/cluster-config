@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gitlab
+  namespace: gitlab-demo
+  labels:
+    app.kubernetes.io/name: gitlab
+    app.kubernetes.io/part-of: gitlab-demo
+spec:
+  serviceName: gitlab
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gitlab
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitlab
+        app.kubernetes.io/part-of: gitlab-demo
+    spec:
+      nodeName: worker-1
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: gitlab
+          image: gitlab/gitlab-ce:17.10.6-ce.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GITLAB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gitlab-root-secret
+                  key: password
+            - name: GITLAB_OMNIBUS_CONFIG
+              value: |
+                external_url 'https://frontend.hse-llm-project-2026.ru/gitlab'
+                letsencrypt['enable'] = false
+                nginx['listen_port'] = 80
+                nginx['listen_https'] = false
+                prometheus_monitoring['enable'] = false
+                gitlab_rails['initial_root_password'] = ENV['GITLAB_ROOT_PASSWORD']
+                gitlab_rails['gitlab_shell_ssh_port'] = 22
+                puma['worker_processes'] = 0
+          ports:
+            - name: http
+              containerPort: 80
+            - name: ssh
+              containerPort: 22
+          resources:
+            requests:
+              cpu: "1500m"
+              memory: "4Gi"
+            limits:
+              cpu: "3"
+              memory: "8Gi"
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -lc
+                - 'curl -fsS -H "Host: frontend.hse-llm-project-2026.ru" http://127.0.0.1/gitlab/-/readiness >/dev/null'
+            initialDelaySeconds: 240
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -lc
+                - 'curl -fsS -H "Host: frontend.hse-llm-project-2026.ru" http://127.0.0.1/gitlab/-/liveness >/dev/null'
+            initialDelaySeconds: 360
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 10
+          volumeMounts:
+            - name: gitlab-data
+              mountPath: /var/opt/gitlab
+              subPath: var-opt-gitlab
+            - name: gitlab-data
+              mountPath: /etc/gitlab
+              subPath: etc-gitlab
+            - name: gitlab-data
+              mountPath: /var/log/gitlab
+              subPath: var-log-gitlab
+      volumes:
+        - name: gitlab-data
+          persistentVolumeClaim:
+            claimName: gitlab-demo-data

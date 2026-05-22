@@ -1,0 +1,18 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: web-gateway
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: web-gateway
+    app.kubernetes.io/component: gateway
+    app.kubernetes.io/managed-by: dns-pipeline
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All

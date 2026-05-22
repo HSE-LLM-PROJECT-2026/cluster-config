@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dns-etcd
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: dns-etcd
+    app.kubernetes.io/component: dns-storage
+    app.kubernetes.io/managed-by: dns-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dns-etcd
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dns-etcd
+        app.kubernetes.io/component: dns-storage
+        app.kubernetes.io/managed-by: dns-pipeline
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: etcd
+          image: quay.io/coreos/etcd:v3.5.9
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/local/bin/etcd
+          args:
+            - --name=dns-etcd
+            - --data-dir=/var/lib/etcd
+            - --listen-client-urls=http://0.0.0.0:2379
+            - --advertise-client-urls=http://dns-etcd.kube-system.svc.cluster.local:2379
+            - --listen-peer-urls=http://0.0.0.0:2380
+            - --initial-advertise-peer-urls=http://dns-etcd.kube-system.svc.cluster.local:2380
+            - --initial-cluster=dns-etcd=http://dns-etcd.kube-system.svc.cluster.local:2380
+            - --initial-cluster-state=new
+            - --initial-cluster-token=dns-pipeline-etcd
+            - --auto-compaction-retention=1
+            - --snapshot-count=10000
+          env:
+            - name: ETCDCTL_API
+              value: "3"
+          ports:
+            - name: client
+              containerPort: 2379
+              protocol: TCP
+            - name: peer
+              containerPort: 2380
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /usr/local/bin/etcdctl
+                - --endpoints=http://127.0.0.1:2379
+                - endpoint
+                - health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - /usr/local/bin/etcdctl
+                - --endpoints=http://127.0.0.1:2379
+                - endpoint
+                - health
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: etcd-data
+              mountPath: /var/lib/etcd
+      volumes:
+        # Talos note: emptyDir is used for maximal compatibility.
+        # Replace with PVC (storageClassName: local-path) for production durability.
+        - name: etcd-data
+          emptyDir: {}

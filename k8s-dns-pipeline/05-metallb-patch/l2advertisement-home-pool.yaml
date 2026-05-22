@@ -1,0 +1,12 @@
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: home-pool-advertisement
+  namespace: metallb-system
+  labels:
+    app.kubernetes.io/name: home-pool-advertisement
+    app.kubernetes.io/component: loadbalancer-advertisement
+    app.kubernetes.io/managed-by: dns-pipeline
+spec:
+  ipAddressPools:
+    - home-pool

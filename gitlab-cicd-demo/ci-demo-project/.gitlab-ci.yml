@@ -1,0 +1,31 @@
+stages:
+  - smoke
+
+variables:
+  DEPLOYMENT_API_URL: "http://deployment-service.hse-llm-project.svc.cluster.local:8000"
+  SECURITY_API_URL: "http://security-audit-service.hse-llm-project.svc.cluster.local:8000"
+
+platform_api_smoke:
+  stage: smoke
+  tags:
+    - llmops
+  script:
+    - echo "Checking deployment-service health"
+    - wget -qO- "$DEPLOYMENT_API_URL/health"
+    - echo
+    - echo "Checking security-audit-service health"
+    - wget -qO- "$SECURITY_API_URL/health"
+    - echo
+    - echo "Listing deployments"
+    - wget -qO- "$DEPLOYMENT_API_URL/deployments?cluster_id=default" > /tmp/deployments.json
+    - test -s /tmp/deployments.json
+    - echo "Listing traffic routes"
+    - wget -qO- "$DEPLOYMENT_API_URL/traffic-routes?cluster_id=default" > /tmp/routes.json
+    - test -s /tmp/routes.json
+    - echo "Smoke test passed"
+  artifacts:
+    when: always
+    expire_in: 1 day
+    paths:
+      - /tmp/deployments.json
+      - /tmp/routes.json

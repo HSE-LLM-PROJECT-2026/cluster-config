@@ -1,0 +1,27 @@
+devicePlugin:
+  enabled: false
+
+gfd:
+  enabled: true
+
+nfd:
+  enabled: false
+
+# Keep GFD only on GPU nodes and avoid error pods on CPU-only workers.
+# This cluster has two NVIDIA PCI labels discovered by NFD:
+# - feature.node.kubernetes.io/pci-0300_10de.present (GTX 1050 Ti)
+# - feature.node.kubernetes.io/pci-0302_10de.present (Tesla V100)
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: feature.node.kubernetes.io/pci-0300_10de.present
+              operator: In
+              values:
+                - "true"
+        - matchExpressions:
+            - key: feature.node.kubernetes.io/pci-0302_10de.present
+              operator: In
+              values:
+                - "true"

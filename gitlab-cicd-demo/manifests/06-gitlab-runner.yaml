@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-runner
+  namespace: gitlab-demo
+  labels:
+    app.kubernetes.io/name: gitlab-runner
+    app.kubernetes.io/part-of: gitlab-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gitlab-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitlab-runner
+        app.kubernetes.io/part-of: gitlab-demo
+    spec:
+      nodeName: worker-1
+      initContainers:
+        - name: register-runner
+          image: gitlab/gitlab-runner:alpine-v17.10.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CI_SERVER_URL
+              value: http://gitlab.gitlab-demo.svc.cluster.local
+            - name: REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitlab-runner-registration-token
+                  key: token
+          command:
+            - /bin/sh
+            - -lc
+            - |
+              set -e
+              if [ -s /etc/gitlab-runner/config.toml ] && grep -q "token =" /etc/gitlab-runner/config.toml; then
+                echo "Runner already configured"
+                exit 0
+              fi
+              gitlab-runner register \
+                --non-interactive \
+                --url "$CI_SERVER_URL" \
+                --registration-token "$REGISTRATION_TOKEN" \
+                --executor "shell" \
+                --description "llmops-shell-runner" \
+                --tag-list "llmops,demo" \
+                --run-untagged="true" \
+                --locked="false" \
+                --access-level="not_protected"
+          volumeMounts:
+            - name: runner-config
+              mountPath: /etc/gitlab-runner
+      containers:
+        - name: gitlab-runner
+          image: gitlab/gitlab-runner:alpine-v17.10.1
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -lc
+            - |
+              gitlab-runner run --working-directory=/home/gitlab-runner --user=gitlab-runner
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          volumeMounts:
+            - name: runner-config
+              mountPath: /etc/gitlab-runner
+      volumes:
+        - name: runner-config
+          emptyDir: {}

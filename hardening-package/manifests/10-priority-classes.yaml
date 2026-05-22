@@ -1,0 +1,24 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: platform-critical
+value: 100000
+globalDefault: false
+description: "Critical platform services with highest scheduling priority."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: platform-standard
+value: 50000
+globalDefault: false
+description: "Default priority for platform and control services."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: llm-inference
+value: 60000
+globalDefault: false
+description: "Inference workloads priority class."
+

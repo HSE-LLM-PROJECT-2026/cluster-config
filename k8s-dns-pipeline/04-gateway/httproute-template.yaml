@@ -1,0 +1,28 @@
+# Copy this file and change:
+# 1) metadata.name
+# 2) metadata.namespace
+# 3) spec.hostnames
+# 4) rules.backendRefs.name
+# 5) rules.backendRefs.port
+#
+# Example:
+#   myapp -> myapp.hse-llm-project-2026.ru -> Service/myapp:8080
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: myapp-route
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: myapp-route
+    app.kubernetes.io/component: route
+    app.kubernetes.io/managed-by: dns-pipeline
+spec:
+  parentRefs:
+    - name: web-gateway
+      sectionName: http
+  hostnames:
+    - myapp.hse-llm-project-2026.ru
+  rules:
+    - backendRefs:
+        - name: myapp
+          port: 8080

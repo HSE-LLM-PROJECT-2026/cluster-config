@@ -1,0 +1,15 @@
+machine:
+  registries:
+    mirrors:
+      10.19.87.2:5000:
+        endpoints:
+          - http://10.19.87.2:5000
+        overridePath: true
+  kernel:
+    modules:
+      - name: nvidia
+      - name: nvidia_uvm
+      - name: nvidia_drm
+      - name: nvidia_modeset
+  sysctls:
+    net.core.bpf_jit_harden: 1

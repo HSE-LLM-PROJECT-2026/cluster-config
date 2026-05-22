@@ -1,0 +1,43 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: llmops-node-stability
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: llmops-node-stability
+      rules:
+        - alert: LLMOpsNodeNotReadyExtended
+          expr: max by (node) (kube_node_status_condition{condition="Ready",status="true"} == 0) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} is NotReady for more than 5 minutes"
+            description: "Node is unavailable for scheduling and workloads may fail over."
+
+        - alert: LLMOpsNodeUnreachableTaint
+          expr: max by (node) (kube_node_spec_taint{key="node.kubernetes.io/unreachable",effect=~"NoSchedule|NoExecute"} > 0) > 0
+          for: 3m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} has unreachable taint"
+            description: "Kubernetes considers this node unreachable."
+
+        - alert: LLMOpsManyTerminatingPodsOnNode
+          expr: |
+            count by (node) (
+              kube_pod_info
+              * on (namespace, pod) group_left()
+              (kube_pod_deletion_timestamp > 0)
+            ) > 5
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.node }} has many terminating pods"
+            description: "Potential kubelet/container runtime stall on this node."
+

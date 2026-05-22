@@ -1,0 +1,14 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-hse-httproute-to-gitlab-service
+  namespace: gitlab-demo
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: hse-llm-project
+  to:
+    - group: ""
+      kind: Service
+      name: gitlab

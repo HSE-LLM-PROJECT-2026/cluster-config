@@ -1,0 +1,34 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*.bak
+.idea/
+.vscode/
+
+# Secrets / local env
+**/.env
+**/.env.local
+**/*.pem
+**/*.key
+**/*.crt
+
+# Talos / Kubernetes local artifacts
+**/kubeconfig
+**/talosconfig
+**/generated/
+**/vpn-keys/
+
+# Terraform local artifacts
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfvars
+**/*.tfstate
+**/*.tfstate.*
+**/crash.log
+**/crash.*.log
+
+# Logs
+**/*.log
