@@ -1,7 +1,5 @@
 # Cluster Config
 
-[HSE-LLM-PROJECT-2026/cluster-config](https://github.com/HSE-LLM-PROJECT-2026/cluster-config)
-
 ## Описание
 
 Инфраструктурный репозиторий для описания и подготовки Kubernetes-кластеров под LLM-платформу. Тут лежит Terraform для Proxmox, Talos-конфиги, GPU-настройки, node discovery, secrets и вспомогательные системные скрипты.
