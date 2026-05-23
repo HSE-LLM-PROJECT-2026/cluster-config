@@ -1,26 +1,64 @@
 # Cluster Config
 
+[HSE-LLM-PROJECT-2026/cluster-config](https://github.com/HSE-LLM-PROJECT-2026/cluster-config)
+
 ## Описание
 
-Набор инфраструктурных конфигов для развёртывания и сопровождения кластерного окружения платформы: Terraform, Talos, node tooling, MinIO, GitLab demo и служебные пакеты.
+Инфраструктурный репозиторий для описания и подготовки Kubernetes-кластеров под LLM-платформу. Тут лежит Terraform для Proxmox, Talos-конфиги, GPU-настройки, node discovery, secrets и вспомогательные системные скрипты.
 
 ## Основные возможности
 
-- provisioning и описание кластера через Terraform
-- bootstrap/операции Talos-кластера
-- deployment пакетов для GPU/NFD/MinIO/Hardening
-- вспомогательные скрипты node autorecovery и GitLab demo
+- описание VM в Proxmox через Terraform
+- bootstrap/reset Talos-кластера
+- настройка GPU runtime для Kubernetes
+- node-feature-discovery и gpu-feature-discovery
+- secret для Hugging Face token
+- MinIO cache для моделей
+- node autorecovery systemd-скрипты
 
 ## Структура проекта
 
-- `llm_proj_terraform/` - IaC-конфиги Terraform
-- `llm_proj_talos/` - Talos bootstrap/reset/tooling
-- `minio-model-cache-deployment/` - MinIO конфиг и deploy scripts
-- `gpu-feature-discovery-deployment/`, `node-feature-discovery-deployment/`
-- `hardening-package/`, `node-autorecovery/`, `gitlab-cicd-demo/`
+- `llm_proj_terraform/` — Terraform-конфигурация Proxmox VM
+- `llm_proj_talos/` — Talos bootstrap/reset и kubeconfig
+- `llm_proj_talos_gpu/` — GPU runtime patches
+- `node-feature-discovery-deployment/` — NFD
+- `gpu-feature-discovery-deployment/` — GPU discovery
+- `huggingface-token-secret-deployment/` — секрет Hugging Face
+- `minio-model-cache-deployment/` — MinIO для cache моделей
+- `node-autorecovery/` — host-level autorecovery
+- `hardening-package/` — базовые hardening-настройки
 
-## Применение
+## Terraform
 
-Каждый подпроект имеет собственные скрипты `deploy-from-scratch.sh` / `delete-all.sh` / `apply-new-variables.sh`.
+```bash
+cd llm_proj_terraform
+terraform init
+terraform plan
+terraform apply
+```
 
-Перед запуском проверь `.env.example` в нужной подпапке и создай рабочий `.env`.
+## Talos
+
+```bash
+cd llm_proj_talos
+./bootstrap.sh
+```
+
+Сброс кластера:
+
+```bash
+cd llm_proj_talos
+./reset-cluster.sh
+```
+
+## GPU runtime
+
+GPU-ноды требуют отдельного Talos patch и Kubernetes runtime manifests из `llm_proj_talos_gpu/`.
+
+## Важное
+
+Секреты и реальные токены не коммитятся. Для локального запуска используются `.env.example` и переменные окружения.
+
+## Автор
+
+Igor Malysh
